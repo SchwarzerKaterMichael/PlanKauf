@@ -3,13 +3,8 @@ import time
 import httplib2
 import apiclient
 from oauth2client.service_account import ServiceAccountCredentials
-import pandas as pd
 import telebot
 from telebot import types
-
-pd.set_option("display.max_columns", 10)
-desired_width = 2048
-pd.set_option('display.width', desired_width)
 
 bot = telebot.TeleBot('<TelegramBotToken>') #  Input your Bot token from paragraph 3
 
@@ -19,14 +14,13 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,
 'https://www.googleapis.com/auth/drive'])
 httpAuth = credentials.authorize(httplib2.Http())
 service = apiclient.discovery.build('sheets', 'v4', http = httpAuth)
+
 spreadsheetId = '<id of your Google Sheet>' #  Input your spreadsheet ID from paragraph 2
 range_name = 'ListTitle!A:F' #  Input name of your list, !, and the range of cells from pargraph 2
 table = service.spreadsheets().values().get(spreadsheetId=spreadsheetId, range=range_name).execute()
 
 Employee_dict = {'Smith': 3, 'Muller': 5, 'Meier': 7, 'Wilson': 9, 'Schneider': 11}
-
 Employee_reason_dict = {'Smith': 4, 'Muller': 6, 'Meier': 8, 'Wilson': 10, 'Schneider': 12}
-
 Item_dict = {'Pen': 'B', 'Paper': 'C','Wasser': 'D','Coffee': 'E','Other': 'F'}
 
 name = ''
@@ -35,7 +29,7 @@ reason = ''
 
 @bot.message_handler(content_types=['text'])
 def start(message):
-    if message.text == '/kauf':
+    if message.text == '/order':
         bot.register_next_step_handler(message, get_name)
         markup = telebot.types.ReplyKeyboardMarkup(True)
         markup.add(telebot.types.InlineKeyboardButton(text='Smith', callback_data='Smith'))
@@ -45,7 +39,7 @@ def start(message):
         markup.add(telebot.types.InlineKeyboardButton(text='Schneider', callback_data='Schneider'))
         bot.send_message(message.chat.id, text="Choose your lastname", reply_markup=markup)
     else:
-        bot.send_message(message.from_user.id, 'Write /kauf')
+        bot.send_message(message.from_user.id, 'Write /order')
 
 def get_name(message):
     global name
