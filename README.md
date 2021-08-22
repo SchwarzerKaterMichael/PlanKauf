@@ -1,5 +1,7 @@
 # PlanKauf
+
 Simplify your centralized company shopping process with Telegram, Google Sheets and Python!
+
 
 1. Create a Service Account. Go to https://console.cloud.google.com/ with your Google account and click "Create a new project" and name it. Go to the API & Services section. Click ENABLE APIS AND SERVICES. Add Google Drive Api and Google Sheets Api. Go to the Service Accounts section. Create a service account and add the owner role to it. Copy the username, it will be useful to you in the second paragraph. In the service account settings, select the keys section and create a JSON-key. The key will be automatically downloaded to your computer. The key must be in the folder with the main script, or you will need to specify the full path to it.
 
