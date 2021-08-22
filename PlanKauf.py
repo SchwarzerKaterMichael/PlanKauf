@@ -1,6 +1,5 @@
 from datetime import datetime
-import locale
-locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
+import time
 import httplib2
 import apiclient
 from oauth2client.service_account import ServiceAccountCredentials
@@ -12,16 +11,16 @@ pd.set_option("display.max_columns", 10)
 desired_width = 2048
 pd.set_option('display.width', desired_width)
 
-bot = telebot.TeleBot('<TelegramBotToken>')
+bot = telebot.TeleBot('<TelegramBotToken>') #  Input your Bot token from paragraph 3
 
-CREDENTIALS_FILE = '<Credential JsonFile of your gserviceaccount>'
+CREDENTIALS_FILE = '<Credential JsonFile of your gserviceaccount>' #  Input the name of your credentials file from paragraph 1 or the path to it
 credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,
 ['https://www.googleapis.com/auth/spreadsheets',
 'https://www.googleapis.com/auth/drive'])
 httpAuth = credentials.authorize(httplib2.Http())
 service = apiclient.discovery.build('sheets', 'v4', http = httpAuth)
-spreadsheetId = '<id of your Google Sheet>'
-range_name = 'BookTitle!A:F' # Book title and cell range
+spreadsheetId = '<id of your Google Sheet>' #  Input your spreadsheet ID from paragraph 2
+range_name = 'ListTitle!A:F' #  Input name of your list, !, and the range of cells from pargraph 2
 table = service.spreadsheets().values().get(spreadsheetId=spreadsheetId, range=range_name).execute()
 
 Employee_dict = {'Smith': 3, 'Muller': 5, 'Meier': 7, 'Wilson': 9, 'Schneider': 11}
@@ -44,9 +43,9 @@ def start(message):
         markup.add(telebot.types.InlineKeyboardButton(text='Meier', callback_data='Meier'))
         markup.add(telebot.types.InlineKeyboardButton(text='Wilson', callback_data='Wilson'))
         markup.add(telebot.types.InlineKeyboardButton(text='Schneider', callback_data='Schneider'))
-        bot.send_message(message.chat.id, text="Выбери свою фамилию из списка и напиши в чат", reply_markup=markup)
+        bot.send_message(message.chat.id, text="Choose your lastname", reply_markup=markup)
     else:
-        bot.send_message(message.from_user.id, 'Напиши /kauf')
+        bot.send_message(message.from_user.id, 'Write /kauf')
 
 def get_name(message):
     global name
@@ -57,7 +56,7 @@ def get_name(message):
     markup.add(telebot.types.InlineKeyboardButton(text='Water', callback_data='Water'))
     markup.add(telebot.types.InlineKeyboardButton(text='Coffee', callback_data='Coffee'))
     markup.add(telebot.types.InlineKeyboardButton(text='Other', callback_data='Other'))
-    bot.send_message(message.chat.id, text='Что ты хочешь заказать', reply_markup=markup)
+    bot.send_message(message.chat.id, text='What you want to order', reply_markup=markup)
     bot.register_next_step_handler(message, get_item)
 
 def get_item(message):
@@ -88,8 +87,8 @@ def get_reason(message):
     bot.register_next_step_handler(message, get_quantity)
 
 def get_quantity(message):
-    global quantity
     try:
+        global quantity
         quantity = message.text
         keyboard = types.InlineKeyboardMarkup()
         key_yes = types.InlineKeyboardButton(text='Yes', callback_data='yes')
@@ -103,30 +102,16 @@ def get_quantity(message):
         def callback_worker(call):
             try:
                 if call.data == "yes":
+                    #  In the value of the range, you need to put the name of our sheet
+                    results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId, 
+                    body={ "valueInputOption": "USER_ENTERED", "data": [{"range": "Listtitle" + "!" +
+                    Item_dict.get(item) + str(Employee_dict.get(name)), "majorDimension": "ROWS",
+                    "values": [[quantity]]}]}).execute()
+                    #  In the value of the range, you need to put the name of our sheet
                     results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId,
-                                                                          body={
-                                                                              "valueInputOption": "USER_ENTERED",
-                                                                              "data": [
-                                                                                  {"range": "Einkaufe" + "!" +
-                                                                                            Item_dict.get(item) + str(
-                                                                                      Employee_dict.get(name)),
-                                                                                   "majorDimension": "ROWS",
-                                                                                   "values": [[quantity]]}
-                                                                              ]
-                                                                          }).execute()
-                    
-                    results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheetId,
-                                                                          body={
-                                                                              "valueInputOption": "USER_ENTERED",
-                                                                              "data": [
-                                                                                  {"range": "Einkaufe" + "!" +
-                                                                                            Item_dict.get(item) + str(
-                                                                                      Employee_reason_dict.get(name)),
-                                                                                   "majorDimension": "ROWS",
-                                                                                   "values": [[reason + ' ' +
-                                                                                               str(datetime.now().date())]]}
-                                                                              ]
-                                                                          }).execute()
+                    body={"valueInputOption": "USER_ENTERED", "data": [{"range": "Listtitle" + "!" +
+                    Item_dict.get(item) + str(Employee_reason_dict.get(name)), "majorDimension": "ROWS",
+                    "values": [[reason + ' ' + str(datetime.now().date())]]}]}).execute()
                     bot.send_message(call.message.chat.id, 'Order completed')
                     start(message)
                 elif call.data == "no":
